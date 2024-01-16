@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Admin khóa học</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link rel="icon" type="image/png" href="images/logo.png">
+    <!-- jquery -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <!-- excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.3/xlsx.full.min.js"></script>
+    <!-- bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- datatable -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+    <script type="text/javascript" charset="utf8"
+        src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+    <!-- excel -->
+    <link rel="stylesheet" type="text/css"
+        href="https://cdn.datatables.net/buttons/2.0.1/css/buttons.dataTables.min.css">
+    <script type="text/javascript" charset="utf8"
+        src="https://cdn.datatables.net/buttons/2.0.1/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" charset="utf8"
+        src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script type="text/javascript" charset="utf8"
+        src="https://cdn.datatables.net/buttons/2.0.1/js/buttons.html5.min.js"></script>
+
+</head>
+
+<body>
+    <div class="container mt-5">
+
+        <div class="mb-5">
+            <a href="index.html">
+                <button class="btn btn-primary me-5">Trang chủ</button>
+            </a>
+            <button class="btn btn-primary" onclick="exportToExcel()">Export to Excel</button>
+        </div>
+
+        <table id="adminTable" class="table table-striped ">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Họ tên</th>
+                    <th>Số điện thoại</th>
+                    <th>Tuổi</th>
+                    <th>Email</th>
+                    <th>Ngày</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="adminTableBody"></tbody>
+        </table>
+    </div>
+
+
+
+    <script>
+        const displayData = (data) => {
+            const tableBody = document.getElementById('adminTableBody');
+            tableBody.innerHTML = '';
+            data.forEach((admin, index) => {
+                const row = document.createElement('tr');
+
+                // Customize this part based on your actual data structure
+                row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${admin.name}</td>
+                <td>${admin.phone}</td>
+                <td>${admin.age}</td>
+                <td>${admin.email}</td>
+                <td>${admin.dateCreated}</td>
+                <td><button class="btn btn-danger" onclick="deleteAdmin('${admin.name}','${admin.phone}','${admin.age}','${admin.email}')">Delete</button></td>
+            `;
+
+                tableBody.appendChild(row);
+            });
+        };
+
+        // Function to delete an admin (you need to implement this)
+        const deleteAdmin = (name, phone, age, email) => {
+            const dataBody = {
+                key: "557701609888",
+                name: name,
+                phone: phone,
+                age: age,
+                email: email
+            };
+            fetch("https://tmbranding.vn/Woay/API/KhoaHoc/delete.php", {
+                method: "POST",
+                body: JSON.stringify(dataBody),
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            })
+                .then((response) => response.text())
+                .then((result) => {
+                    window.location.reload();
+                })
+                .catch((error) => {
+                    console.error(error);
+                });
+        };
+
+        // Function to check token and fetch data
+        const checkTokenAndFetchData = async () => {
+            const storedValue = sessionStorage.getItem("token");
+
+            if (!storedValue) {
+                window.location.href = "login.html";
+            } else {
+                const dataBody = {
+                    key: "557701609888",
+                };
+
+                try {
+                    const response = await fetch("https://tmbranding.vn/Woay/API/KhoaHoc/select.php", {
+                        method: "POST",
+                        body: JSON.stringify(dataBody),
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    sessionStorage.setItem('list', JSON.stringify(result))
+                    // console.log("Response:", result);
+
+                    displayData(result);
+                } catch (error) {
+                    console.error("Fetch error:", error);
+                }
+            }
+        };
+
+
+        checkTokenAndFetchData();
+    </script>
+
+    <script>
+        function exportToExcel() {
+
+            const data = JSON.parse(sessionStorage.getItem('list'));
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+
+            XLSX.writeFile(workbook, 'exported_data.xlsx');
+        }
+    </script>
+</body>
+
+</html>
