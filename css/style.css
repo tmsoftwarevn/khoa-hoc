@@ -5597,7 +5597,8 @@ a:link {
 
 @media (max-width: 767px) {
     #SECTION1042 {
-        height: 1947.83px;
+        /* height: 1947.83px; */
+        height: 1200px;
     }
 
     #SECTION1042>.ladi-section-background {
